@@ -1,0 +1,330 @@
+<!--
+
+
+
+
+PLEASE NOTE:
+
+The most important thing is to first scroll down and set the RPC_PROVIDER_URL variable.
+
+That should the url of a proper RPC provider (Alchemy, Infura, etc).
+
+Why is that needed? This codebase uses Metamask + public RPC to get balances
+and contract info. But requires a proper RPC to listen for bet placing/settling
+events because free RPCs are not reliable for that.
+
+
+
+
+
+-->
+<!doctype html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Webapp Example</title>
+    <style>
+
+        * { box-sizing:border-box; outline: 0; padding: 0; margin: 0; color: inherit; }
+        html { background: #222; color: #ccc; font-size: 11pt; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; }
+        button { background: yellow; color: black; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1rem; padding: 1rem 2rem; border: 0; cursor: pointer; }
+        section { margin-top: 3rem; padding: 0 25% 0 5%; }
+            section p { margin-bottom: 1rem; border-left: 0.5rem solid yellow; padding-left: 1rem; }
+
+    </style>
+
+</head>
+<body>
+
+    <section>
+        <button class="run">Connect to Metamask, bet 1 SINO at 2.00</button>
+    </section>
+
+    <section class="logg"></section>
+
+    <!-- <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"type="application/javascript"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.1/ethers.umd.min.js"type="application/javascript"></script>
+
+    <script>
+
+        // Plug a proper RPC Provider URL: Alchemy, Infura, etc.
+        const RPC_PROVIDER_URL = "";
+
+        // Smart contract details (Arbitrum Sepolia)
+        const CASINO_CONTRACT_ADDRESS = "0x61f4deE748f5ABF85889B37bB43b40c1DA0Eae24";
+        const CASINOTOKEN_CONTRACT_ADDRESS = "0xf7749328FD2aFB711Afbc0D5b864cAFb3530f090";
+
+        const casinoTokenContractAbi = [
+            'function balanceOf(address account) public view returns (uint256)',
+        ];
+
+        const casinoContractAbi = [
+            'function isBettingEnabled() public view returns(bool)',
+            'function randomizerCallbackFee() public view returns(uint256)',
+            'function jackpotFund() public view returns(uint256)',
+            'function maxPayout() public view returns(uint256)',
+            'function minBetAmount() public view returns(uint256)',
+            'function minDecimalOddsX100() public view returns(uint256)',
+            'function maxDecimalOddsX100() public view returns(uint256)',
+
+            'event BetPlaced(uint256 indexed id, address indexed bettor, uint256 amount, uint256 decimalStyleOddsX100, address indexed agent, uint256 reqRandomizerCallbackFee, uint256 updatedBettorTokenBalance, uint256 updatedBettorEthBalance)',
+            'event BetSettled(uint256 indexed id, address indexed bettor, uint256 amount, uint256 decimalStyleOddsX100, address indexed agent, bool isWon, uint256 actualProbabilityPcX100, uint256 randomNumber, uint256 mintToBettor, uint256 mintToJackpotFund, uint256 mintToAgent, uint256 updatedBettorTokenBalance, uint256 updatedJackpotFund, uint256 jackpotAmountWon)',
+            'event BetVoid(uint256 indexed id, address indexed bettor, uint256 amount, address indexed agent, uint256 updatedBettorTokenBalance)',
+            'event SettingsChanged(bool isBettingEnabled, uint256 houseEdgePcX100, uint256 minDecimalOddsX100, uint256 maxDecimalOddsX100, uint256 minBetAmount, uint256 maxPayout, uint256 randomizerCallbackFee, uint256 jackpotRandomNumberThreshold)',
+            'function placeBet(uint256 betAmount, uint256 decimalStyleOddsX100, address agent) public payable returns(uint256)',
+        ];
+
+        // Chain details to use in Metamask
+        const chainIdNumeric = 421614;
+        const chain = {
+            chainName: 'Arbitrum Sepolia',
+            chainId: '0x66eee',
+            rpcUrls: [
+                'https://sepolia-rollup.arbitrum.io/rpc',
+                'https://endpoints.omniatech.io/v1/arbitrum/sepolia/public',
+                'https://arbitrum-sepolia.blockpi.network/v1/rpc/public	',
+            ],
+            blockExplorerUrls: [
+                'https://sepolia.arbiscan.io',
+            ],
+            nativeCurrency: {
+                name: 'Ethereum',
+                symbol: 'ETH',
+                decimals: 18,
+            },
+        };
+
+        // Utility function to trigger network switching in Metamask
+        async function switchNetwork () {
+            try {
+                // Switch wallet to relevant chain
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: chain.chainId }],
+                });
+            } catch (error) {
+                // This error code indicates that we must add the chain to wallet first
+                if (error.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [chain],
+                        });
+                    } catch (addError) {
+                        console.error(addError);
+                    }
+                }
+            }
+        }
+
+        async function functionThatConnectsToWalletAndPlacesBet () {
+
+            // Make sure all necessary variables have been filled
+            if (!RPC_PROVIDER_URL || !CASINO_CONTRACT_ADDRESS || !CASINOTOKEN_CONTRACT_ADDRESS) {
+                logg(`Missing variables - Open the code and set these const variables: RPC_PROVIDER_URL, CASINO_CONTRACT_ADDRESS, CASINOTOKEN_CONTRACT_ADDRESS`);
+                return;
+            }
+
+            // Connect to Metamask and make user switch to the correct network
+            logg(`Connecting to Metamask, if not already connected`);
+            if (!window.ethereum) {
+                return;
+            }
+
+            logg(`Switching to correct network, if not already set`);
+            await switchNetwork();
+            const ethersWeb3Provider = new ethers.providers.Web3Provider(window.ethereum);
+            const network = await ethersWeb3Provider.getNetwork();
+            if (network.chainId.toString() !== chainIdNumeric.toString()) {
+                logg(`Wallet network is not set properly, it should be ${chain.chainName} (ID: ${chain.chainId})`);
+                return;
+            }
+
+            // Use Metamask to read wallet balances
+            const addresses = await ethersWeb3Provider.send("eth_requestAccounts", []);
+            const walletAddress = addresses[0];
+            logg(`Wallet connected: <a href="${chain.blockExplorerUrls[0]}/address/${walletAddress}" target="_blank">${walletAddress}</a>`);
+
+            const casinoTokenContract = new ethers.Contract(
+                CASINOTOKEN_CONTRACT_ADDRESS,
+                casinoTokenContractAbi,
+                ethersWeb3Provider
+            );
+            const tokenBalanceWei = await casinoTokenContract.balanceOf(walletAddress);
+            const tokenBalance = ethers.utils.formatUnits(tokenBalanceWei, 'ether');
+            const ethBalanceWei = await ethersWeb3Provider.getBalance(walletAddress);
+            const ethBalance = ethers.utils.formatUnits(ethBalanceWei, 'ether');
+            logg(`SINO token balance: ${tokenBalance}`);
+            logg(`ETH balance: ${ethBalance}`);
+
+            // Use Metamask to read Casino contract settings
+            const casinoContract = new ethers.Contract(
+                CASINO_CONTRACT_ADDRESS,
+                casinoContractAbi,
+                ethersWeb3Provider
+            );
+            const isBettingEnabled = await casinoContract.isBettingEnabled();
+            const randomizerCallbackFeeWei = await casinoContract.randomizerCallbackFee();
+            const randomizerCallbackFee = ethers.utils.formatUnits(randomizerCallbackFeeWei, 'ether');
+            const jackpotFundWei = await casinoContract.jackpotFund();
+            const jackpotFund = ethers.utils.formatUnits(jackpotFundWei, 'ether');
+            const maxPayoutWei = await casinoContract.maxPayout();
+            const maxPayout = ethers.utils.formatUnits(maxPayoutWei, 'ether');
+            const minBetAmountWei = await casinoContract.minBetAmount();
+            const minBetAmount = ethers.utils.formatUnits(minBetAmountWei, 'ether');
+            const minDecimalOddsX100 = await casinoContract.minDecimalOddsX100();
+            const minDecimalOdds = parseFloat(minDecimalOddsX100) / 100;
+            const maxDecimalOddsX100 = await casinoContract.maxDecimalOddsX100();
+            const maxDecimalOdds = parseFloat(maxDecimalOddsX100) / 100;
+            logg('Casino contract settings read');
+
+            // We want to place a bet of 1 SINO tokens at decimal odds of 2.00 (try to double our money)
+            const betAmount = 1;
+            const decimalOdds = 2.00;
+
+            // Enter your address to receive a commission if the user's bet wins
+            const agentAddress = '0x0000000000000000000000000000000000000000';
+
+            // Perform checks to make sure the Casino contract won't refuse our bet placing.
+            if (isBettingEnabled !== true) {
+                logg('Betting is currently disabled in the Casino contract');
+                return;
+            }
+            if (!parseFloat(betAmount)) {
+                logg('Bet amount must be numeric');
+                return;
+            }
+            if (parseFloat(betAmount) < parseFloat(minBetAmount)) {
+                logg('Bet amount must be equal or bigger than Casino contract\'s minimum bet amount setting');
+                return;
+            }
+            if (parseFloat(tokenBalance) < parseFloat(betAmount)) {
+                logg('Wallet must have enough SINO tokens to place the bet');
+                return;
+            }
+            if (parseFloat(ethBalance) < parseFloat(randomizerCallbackFee)) {
+                logg('Wallet must have enough ETH to send in order to cover the oracle\'s bet settling transaction');
+                return;
+            }
+            if (parseFloat(decimalOdds) < parseFloat(minDecimalOdds)) {
+                logg('Decimal odds must be equal or bigger than Casino contract\'s minimum odds setting');
+                return;
+            }
+            if (parseFloat(decimalOdds) > parseFloat(maxDecimalOdds)) {
+                logg('Decimal odds must be equal or lower than Casino contract\'s minimum odds setting');
+                return;
+            }
+            const payoutIfWin = parseFloat(betAmount) * parseFloat(decimalOdds);
+            if (payoutIfWin > maxPayout) {
+                logg('Bet payout must not exceed Casino contract\'s max payout setting');
+                return;
+            }
+
+            try {
+                const betAmountWei = ethers.utils.parseUnits(betAmount.toString(), 'ether');
+                const decimalStyleOddsX100 = parseInt(decimalOdds * 100);
+                const blockNumerBeforeBetPlacing = await ethersWeb3Provider.getBlockNumber();
+
+                // Submit the placing bet tx via Metamask
+                logg('Placing bet');
+                const casinoContractWithSigner = new ethers.Contract(
+                    CASINO_CONTRACT_ADDRESS,
+                    casinoContractAbi,
+                    ethersWeb3Provider.getSigner()
+                );
+                const tx = await casinoContractWithSigner.placeBet(
+                    betAmountWei,
+                    decimalStyleOddsX100,
+                    agentAddress,
+                    { value: randomizerCallbackFeeWei } // placeBet expects caller to send enough ETH to cover the bet settling tx fee
+                );
+                logg(`Bet submitted, tx: ${tx.hash}`);
+
+                // Using a proper RPC Provider, keep fetching BetPlaced events emitted by the casino contract
+                // until we get the one for our bet (same tx hash), which gives us the betId
+                logg('Waiting for bet id (listening to Casino contract\'s BetPlaced events...)');
+                const ethersRpcProvider = new ethers.providers.JsonRpcProvider(RPC_PROVIDER_URL);
+                let betId;
+                let blockNumberWhenBetTxMined;
+                while (!betId) {
+                    const events = await ethersRpcProvider.getLogs({
+                        fromBlock: blockNumerBeforeBetPlacing,
+                        address: CASINO_CONTRACT_ADDRESS,
+                        topics: [casinoContract.interface.getEventTopic('BetPlaced')],
+                    });
+
+                    const relevantBetPlacedEvent = events.find((event) => event.transactionHash === tx.hash);
+                    if (relevantBetPlacedEvent) {
+                        const interfaceForParsing = new ethers.utils.Interface(casinoContractAbi);
+                        const e = interfaceForParsing.parseLog(relevantBetPlacedEvent);
+                        betId = parseFloat(e.args.id);
+                        blockNumberWhenBetTxMined = relevantBetPlacedEvent.blockNumber;
+                        logg(`Bet id: ${betId}`);
+                    } else {
+                        // Wait a bit before retrying (e.g., 3 seconds)
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                    }
+                }
+
+                // Now we have the bet ID. Using proper RPC Provider, keep fetching the latest
+                // BetSettled events until we get the one for our bet, which tells us the outcome
+                logg('Waiting for bet outcome (listening to Casino contract\'s BetSettled events...)');
+                while (true) {
+                    const events = await ethersRpcProvider.getLogs({
+                        fromBlock: blockNumberWhenBetTxMined,
+                        address: CASINO_CONTRACT_ADDRESS,
+                        topics: [casinoContract.interface.getEventTopic('BetSettled')],
+                    });
+
+                    const relevantBetSettledEvent = events.find((event) => {
+                        const interfaceForParsing = new ethers.utils.Interface(casinoContractAbi);
+                        const e = interfaceForParsing.parseLog(event);
+                        const eventBetId = parseFloat(e.args.id);
+                        return eventBetId === betId;
+                    });
+
+                    if (relevantBetSettledEvent) {
+                        const interfaceForParsing = new ethers.utils.Interface(casinoContractAbi);
+                        const e = interfaceForParsing.parseLog(relevantBetSettledEvent);
+
+                        const isWon = e.args.isWon;
+                        const mintToBettor = parseFloat(ethers.utils.formatUnits(e.args.mintToBettor, 'ether'));
+                        const jackpotAmountWon = parseFloat(ethers.utils.formatUnits(e.args.jackpotAmountWon, 'ether'));
+                        const updatedBettorTokenBalance = parseFloat(ethers.utils.formatUnits(e.args.updatedBettorTokenBalance, 'ether'));
+
+                        logg(`Bet settled: ${isWon ? 'WON' : 'LOST'} // Mint to bettor: ${mintToBettor} // New SINO balance: ${updatedBettorTokenBalance}`);
+                        logg(`This is the point where, with the bet outcome known, we could play a winning/losing animation to the user`);
+                        break;
+                    } else {
+                        // Wait a bit before retrying (e.g., 3 seconds)
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                    }
+                }
+            } catch (err) {
+                logg(err);
+            }
+        }
+
+
+
+        document.querySelector('.run').onclick = async function () {
+            resetLogg();
+            await functionThatConnectsToWalletAndPlacesBet();
+        };
+
+        function logg (text) {
+            const loggElement = document.querySelector('.logg');
+            loggElement.innerHTML += `<p>${text}</p>`;
+        }
+
+        function resetLogg () {
+            const loggElement = document.querySelector('.logg');
+            loggElement.innerHTML = '';
+        }
+
+    </script>
+
+</body>
+</html>
