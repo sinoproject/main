@@ -1,0 +1,28 @@
+{
+    "env": {
+        "node": true,
+        "browser": true,
+        "commonjs": true,
+        "es6": true,
+        "mocha": true
+    },
+    "globals": {
+        "BigInt": "writable",
+        "Atomics": "readonly",
+        "SharedArrayBuffer": "readonly",
+        "__dirname": "readonly"
+    },
+    "parserOptions": {
+        "ecmaVersion": 2018
+    },
+    "rules": {
+        "eqeqeq": "warn",
+        "curly": "warn",
+        "quotes": ["warn", "single"],
+        "no-unused-expressions": "warn",
+        "no-unused-vars": "warn",
+        "no-undef": "warn",
+        "no-const-assign": "error",
+        "semi": ["warn", "always"]
+    }
+}
