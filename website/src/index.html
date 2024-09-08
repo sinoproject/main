@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <title>Sino Project</title>
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+        * {
+            box-sizing:border-box;
+            -webkit-box-sizing:border-box;
+            -moz-box-sizing:border-box;
+
+            font-smoothing: antialiased;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizelegibility;
+
+            outline: 0;
+            padding: 0;
+            margin: 0;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        *::selection {
+            background: white;
+            color: black;
+        }
+
+        html {
+            font-family: "Nunito", sans-serif;
+            font-optical-sizing: auto;
+            font-style: normal;
+            font-size: 11pt;
+            color: #666;
+        }
+
+        @media screen and (min-width: 900px) {
+            html { font-size: 12pt; }
+        }
+
+        @media screen and (min-width: 1280px) {
+            html { font-size: 14pt; }
+        }
+
+        @media screen and (min-width: 1680px) {
+            html { font-size: 16pt; }
+        }
+
+        body, input, select, textarea {
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        body {
+            background: #111;
+        }
+
+        p a,
+        p a:link,
+        p a:hover,
+        p a:visited {
+            text-decoration: none;
+        }
+
+        .no-padding-top {
+            padding-top: 0;
+        }
+
+        .alt-background {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .arrow {
+            font-size: 2rem;
+            opacity: 0.33;
+        }
+
+
+
+        .prehero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 20vh;
+            padding: 0 3rem;
+            align-items: center;
+        }
+
+            .prehero-left {}
+
+                .prehero-project-icon {
+                    width: 3rem;
+                    height: auto;
+                    position: relative;
+                }
+
+            .prehero-right {
+                text-align: right;
+            }
+
+                .prehero-icon {
+                    margin-left: 2rem;
+                    padding: 0.65rem;
+                    opacity: 0.7;
+                }
+
+        @media screen and (min-width: 900px) {
+
+            .prehero {
+                padding: 0 10%;
+            }
+
+                .prehero-icon {
+                    padding: 0.5rem;
+                }
+
+        }
+
+
+
+        .hero {
+            display: grid;
+            align-content: center;
+            padding: 6rem 3rem;
+            text-align: left;
+        }
+
+            .hero-headline {
+                margin-bottom: 1rem;
+            }
+
+                .hero-headline span {
+                    font-size: 2.4rem;
+                    font-weight: bold;
+                    line-height: 1.2;
+                    color: #eee;
+                }
+
+            .hero .blurb {
+                font-size: 1.2rem;
+                margin-bottom: 1rem;
+            }
+
+                .hero .blurb p {
+                    margin-bottom: 1rem;
+                }
+
+                .hero .blurb p:last-child {
+                    margin-bottom: 0;
+                }
+
+        @media screen and (min-width: 900px) {
+
+            .hero {
+                min-height: 70vh;
+                padding: 0 10%;
+            }
+
+                .hero-headline {
+                    max-width: 70%;
+                }
+
+                .hero .blurb {
+                    max-width: 70%;
+                    font-size: 1.1rem;
+                }
+
+        }
+
+
+
+        .pointers {
+            width: 100%;
+            padding-top: 3rem;
+            padding-bottom: 3rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+            .pointers div {
+                padding: 3rem 3rem 1rem 3rem;
+                text-align: left;
+            }
+
+                .pointers .headline {
+                    margin-bottom: 1rem;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 1.3rem;
+                }
+
+
+        @media screen and (min-width: 900px) {
+
+            .pointers {
+                width: 90%;
+                margin: 0 auto;
+                display: grid;
+                align-content: center;
+                justify-content: center;
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+
+                .pointers div {
+                    padding: 3rem 3rem 3rem 3rem;
+                    text-align: left;
+                }
+
+        }
+
+
+
+        .minihero {
+            padding: 6rem 5%;
+            text-align: center;
+        }
+
+            .minihero .headline {
+                font-weight: normal;
+                color: #fff;
+                margin-top: 2rem;
+                font-size: 1rem;
+            }
+
+            .minihero .headline:first-child {
+                margin-top: 0;
+            }
+
+            .minihero .button {
+                display: inline-block;
+                margin-bottom: 2rem;
+                font-size: 1.5rem;
+                font-weight: bold;
+                letter-spacing: 0.1rem;
+                border-bottom: 1px solid rgba(250, 255, 105, 1);
+                color: rgba(255, 255, 255, 0.9);
+                cursor: pointer;
+            }
+
+            .minihero .button::after {
+                content: "→";
+                margin-left: 0.5rem;
+                font-size: 1rem;
+                font-weight: normal;
+            }
+
+        @media screen and (min-width: 900px) {
+
+            .minihero {
+                padding: 8rem 20%;
+            }
+
+        }
+
+    </style>
+
+</head>
+<body>
+
+    <div class="prehero">
+        <div class="prehero-left">
+            <img class="prehero-project-icon" src="./sino-logo.svg" />
+        </div>
+        <div class="prehero-right">
+
+        </div>
+    </div>
+
+    <div class="hero">
+        <h1 class="hero-headline">
+            <span>
+                Sino is a blockchain betting protocol with deflationary token.
+            </span>
+        </h1>
+        <div class="blurb">
+            <p>All bets are placed/settled using the SINO token. The betting smart contract burns tokens when a bet is placed, mints to pay out winnings.</p>
+            <p>There's no human counterparty holding/handling funds. This project is currently deployed on Arbitrum Sepolia, main net coming later.</p>
+        </div>
+        <div class="arrow">&darr;</div>
+    </div>
+
+    <section class="alt-background">
+        <div class="pointers">
+            <div>
+                <h3 class="headline">Betting Example</h3>
+                <p>A user bets 1000 SINO at odds of 2.00. The smart contract burns it. If bet wins, it mints 2000 SINO to the user. Actual winning chance is 49% (not 50%) due to house edge.</p>
+            </div>
+            <div>
+                <h3 class="headline">House Edge And Deflation</h3>
+                <p>The 2% house edge, built into the betting contract, makes it possible to: deflate the SINO token, reward game creators, top up the jackpot fund.</p>
+            </div>
+            <div>
+                <h3 class="headline">No Human Counterparty</h3>
+                <p>The only human involvement is an oracle injecting random numbers onchain. These numbers get used for settling bets.</p>
+            </div>
+            <div>
+                <h3 class="headline">Game Creator Rewards</h3>
+                <p>If you build a dapp with games on top of the Sino betting smart contract, you'll get rewarded with SINO tokens after every winning bet placed via your dapp.</p>
+            </div>
+            <div>
+                <h3 class="headline">Jackpot Fund</h3>
+                <p>Every bet, regardless of its size, also has a 1% chance of winning the jackopt.</p>
+            </div>
+            <div>
+                <h3 class="headline">Transparency</h3>
+                <p>Every bet placing/settling and random number injection generates an onchain event, auditable by anyone.</p>
+            </div>
+            <div>
+                <h3 class="headline">Privacy</h3>
+                <p>All needed to place bets is a crypto wallet. No need to register an account or provide personal details.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="minihero">
+            <div>
+                <a class="button" href="https://sinotestnet.kbc22.com" target="_blank">Testnet Casino</a>
+            </div>
+            <div>
+                <a class="button" href="https://sinoproject.gitbook.io/docs/repo-contracts" target="_blank">Contract Addresses</a>
+            </div>
+            <div>
+                <a class="button" href="https://sinoproject.gitbook.io/docs" target="_blank">Docs</a>
+            </div>
+            <div>
+                <a class="button" href="https://github.com/sinoproject/main" target="_blank">Repo</a>
+            </div>
+            <div>
+                <a class="button" href="https://t.me/sinoproject" target="_blank">Telegram</a>
+            </div>
+            <div>
+                <a class="button" href="https://x.com/sinoproject" target="_blank">X</a>
+            </div>
+        </div>
+    </section>
+
+</body>
+</html>

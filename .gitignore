@@ -1,0 +1,9 @@
+*/.env
+*/.env.testnet
+*/.env.production
+*/logs/*
+!*/logs/empty
+*/node_modules*
+*/yarn.lock*
+*/dist/*
+*.bak
