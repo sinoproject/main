@@ -1,0 +1,16 @@
+{
+  "name": "oracle",
+  "version": "1.0.0",
+  "main": "oracle.js",
+  "license": "MIT",
+  "scripts": {
+    "oracle": "node index.js"
+  },
+  "dependencies": {
+    "async": "^3.2.3",
+    "dayjs": "^1.11.9",
+    "dotenv": "^16.3.1",
+    "ethers": "5.7",
+    "winston": "^3.10.0"
+  }
+}
